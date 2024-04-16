@@ -5,14 +5,16 @@ import numpy as np
 from datetime import date,timedelta
 import pickle as pkl
 import os
+from pdb import set_trace
 
 class YahooData:
-    def __init__(self, start_date = '2015-01-01') -> None:
+    def __init__(self, start_date = '2020-01-01') -> None:
         self.start_date = start_date
-        self.load_data()
+        self.max_retries = 2
+        self.delisted = 2
 
     def load_data(self, cache=True):
-        end_offset = 1
+        end_offset = 0
         self.end_date = (date.today()-timedelta(end_offset)).isoformat()
 
         cache_file = f'etf_prices_{self.end_date}.pkl'
@@ -23,12 +25,15 @@ class YahooData:
             except:
                 print(f"Cache data not available for {self.end_date}. Downloading...")
 
-        sheet='usetf.xlsx'
+        sheet='usetf2.xlsx'
         etfs = pd.read_excel(sheet)
 
         pulled = []
         data = yf.download(list(etfs['Ticker']),self.start_date,self.end_date)
-        while missing_col := sum(data.isnull().all()) > 0:
+        #set_trace()
+
+        retry_cnt = 0
+        while (missing_col := sum(data.isnull().all())) > self.delisted and retry_cnt < self.max_retries:
             if 0:
                 end_offset += 1
                 self.end_date = (date.today()-timedelta(end_offset)).isoformat()
@@ -37,6 +42,8 @@ class YahooData:
             nc = null_col[null_col>0].index.values
             data[nc] = pulled[nc]
 
+            retry_cnt += 1
+            print(f"Failed to fetch prices for {missing_col} tickers.")
             #raise AttributeError(f"Failed to fetch prices for {missing_col} tickers.")
 
         self.yahoo_to_prices(data)
@@ -51,5 +58,5 @@ class YahooData:
         return self.prices
 
 if __name__ == '__main__':
-    f = YahooData()
-    
+    f = YahooData(start_date = '2023-01-01')
+    f.load_data(cache=False)
