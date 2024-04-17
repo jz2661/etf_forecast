@@ -15,52 +15,48 @@ from pdb import set_trace
 import matplotlib.pyplot as plt
 from kerastuner.tuners import RandomSearch
 from kerastuner.engine.hyperparameters import HyperParameters
+from keras_tuner import Objective
 
 SUBMODEL_PATH = 'models'
 
 # Define a model-building function
 def build_model(hp):    
-    hp.Choice('activation', values=['relu','tanh'])
+    dropout = 0.2
+    l1_loss = hp.Choice('l1_loss', values=[1e-2,1e-3,1e-5,])
+    activation = hp.Choice('activation', values=['relu','tanh'])
+    learning_rate = hp.Choice('learning_rate', values=[1e-2,1e-3,1e-4,])
+    X_noise = 0
+    
     # Define the model architecture
-    self.model = Sequential([
-        GaussianNoise(hp.Choice('x_noise', values=[1e-2, 1e-3, 0e-4])),
-        Dense(512, activation=hp.Choice('activation', values=['relu','tanh']), input_shape=(1200,)),
-        Dropout(self.dropout),  # Dropout layer to prevent overfitting
+    model = Sequential([
+        GaussianNoise(X_noise),
+        Dense(512, activation=activation, input_shape=(1200,)),
+        Dropout(dropout),  # Dropout layer to prevent overfitting
         BatchNormalization(),  # Batch normalization layer
-        Dense(512, activation=self.activation, kernel_regularizer=regularizers.l1(self.l1_loss)),
-        Dropout(self.dropout),
+        Dense(512, activation=activation, input_shape=(1200,)),
+        Dropout(dropout),  # Dropout layer to prevent overfitting
+        Dense(256, activation=activation, kernel_regularizer=regularizers.l1(l1_loss)),
+        Dropout(dropout),
         #BatchNormalization(),
-        Dense(256, activation=self.activation, kernel_regularizer=regularizers.l1(self.l1_loss)),
-        Dropout(self.dropout),
-        #BatchNormalization(),
-        Dense(128, activation=self.activation, kernel_regularizer=regularizers.l1(self.l1_loss)),
-        Dropout(self.dropout),
+        Dense(128, activation=activation, kernel_regularizer=regularizers.l1(l1_loss)),
+        Dropout(dropout),
         BatchNormalization(),
         Dense(1, activation='sigmoid')  # Output layer with a single neuron and sigmoid activation function
     ])
 
     # Compile the model
-    opt = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
-    self.model.compile(optimizer=opt, loss=self.weighted_binary_crossentropy, metrics=[self.custom_pnl])
+    opt = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+    model.compile(optimizer=opt, loss=ModelDNN.weighted_binary_crossentropy, metrics=[ModelDNN.custom_pnl])
     return model
 
 class ModelDNN:
     def __init__(self) -> None:
         self.lags = [1,5,21,126]
-        if 0:
-            self.dropout = 0.2
-            self.l1_loss = 1e-3
-            self.activation = 'relu'
-            self.learning_rate = 1e-3
-            # the higher, less over-fitting but slower learning
-            self.augmentation_noise_multiple = 1.
-            self.X_noise = 0.001
-            self.augmentation_records = 1e4
         if 1:
-            self.dropout = 0.2
-            self.l1_loss = 1e-3
-            self.activation = 'relu'
-            self.learning_rate = 1e-3
+            self.dropout = 0.1
+            self.l1_loss = 1e-2
+            self.activation = 'tanh'
+            self.learning_rate = 1e-4
             # the higher, less over-fitting but slower learning
             self.augmentation_noise_multiple = 1.
             self.X_noise = 0.001
@@ -74,7 +70,11 @@ class ModelDNN:
 
         y_binary = tf.round((tf.sign(y_true)+1) / 2)
 
-        loss = -tf.reduce_mean((y_binary * tf.math.log(y_pred) + (1 - y_binary) * tf.math.log(1 - y_pred)) )
+        y_std = 0.01
+        y_prob = tf.sigmoid(y_true / y_std)
+
+        #loss = -tf.reduce_mean((y_binary * tf.math.log(y_pred) + (1 - y_binary) * tf.math.log(1 - y_pred)) * weights)
+        loss = -tf.reduce_mean((y_prob * tf.math.log(y_pred) + (1 - y_prob) * tf.math.log(1 - y_pred)) )
 
         return loss
 
@@ -88,14 +88,45 @@ class ModelDNN:
     def custom_pnl(y_true, y_pred):
         # Convert predicted probabilities to binary predictions
         #y_pred_binary = tf.round(y_pred)
-        posi = tf.round(y_pred * 2 - 1.)
+        posi = (y_pred * 2 - 1.)
         pnlx = y_true * posi
         gamma = 0.1
+        epsv = 0.0001
         # Compare binary predictions with true labels
-        pnl = (tf.reduce_mean(pnlx) - gamma * tf.math.reduce_std(pnlx)) * 52
+        pnl = (tf.reduce_mean(pnlx) / (tf.math.reduce_std(pnlx)+epsv) ) * np.sqrt(52)
         
         return pnl
 
+    def tune_train_epochs(self, epochs=10):
+        # Instantiate the tuner
+        print(f"Model Tuning:")
+
+        tuner = RandomSearch(
+            build_model,
+            objective=Objective("val_custom_pnl", direction="max"),
+            max_trials=20,  # Number of hyperparameter combinations to try
+            executions_per_trial=2,  # Number of models to train per trial
+            directory='my_tuning',  # Directory to store the tuning results
+            project_name='my_tuning_project')  # Name of the tuning project
+
+        # Start the hyperparameter search
+        tuner.search(self.X_train, self.y_train, epochs=epochs, validation_data=(self.X_test, self.y_test))
+
+        # Get the best hyperparameters
+        self.best_hp = tuner.get_best_hyperparameters(num_trials=2)[0]
+        print()
+        print(self.best_hp.values)
+
+        # Build the best model
+        self.best_model = tuner.hypermodel.build(self.best_hp)
+
+        # Train the best model
+        history = self.best_model.fit(self.X_train, self.y_train, epochs=epochs, validation_data=(self.X_test, self.y_test))
+        self.plot_history(history)
+        
+        self.train_history = history
+        return history
+    
     def specify_model(self, warm=True):
         if warm:
             self.model = self.load_model().model
@@ -107,9 +138,8 @@ class ModelDNN:
             Dense(512, activation=self.activation, input_shape=(1200,)),
             Dropout(self.dropout),  # Dropout layer to prevent overfitting
             BatchNormalization(),  # Batch normalization layer
-            Dense(512, activation=self.activation, kernel_regularizer=regularizers.l1(self.l1_loss)),
-            Dropout(self.dropout),
-            #BatchNormalization(),
+            Dense(512, activation=self.activation, input_shape=(1200,)),
+            Dropout(self.dropout),  # Dropout layer to prevent overfitting
             Dense(256, activation=self.activation, kernel_regularizer=regularizers.l1(self.l1_loss)),
             Dropout(self.dropout),
             #BatchNormalization(),
@@ -165,11 +195,14 @@ class ModelDNN:
         X = self.X[valids].fillna(0)
 
         # Split the data into training and testing sets
-        self.X_train, self.X_test, self.y_train,self.y_test = train_test_split(X.drop(['y'], axis=1).values, X['y'].values, test_size=0.2, shuffle=False)
+        self.X_train, self.X_test, self.y_train,self.y_test = train_test_split(X.drop(['y'], axis=1).values, X['y'].values, test_size=0.02, shuffle=False)
         self.data_augmentation()
 
-        self.specify_model(warm=False)
-        self.train_epochs(50)
+        self.specify_model(warm=True)
+        
+        self.train_epochs(3)
+        #self.tune_train_epochs(10)
+
         self.test_model()
 
     def model_predict(self):
@@ -199,7 +232,7 @@ class ModelDNN:
         self.model.save(os.path.join(SUBMODEL_PATH, f"dnn_{datetime.today().strftime('%Y%m%d')}.keras"))
 
     @classmethod
-    def load_model(cls, filename=os.path.join(SUBMODEL_PATH, "dnn_20240416.keras")):
+    def load_model(cls, filename=os.path.join(SUBMODEL_PATH, "dnn_20240417.keras")):
         this = ModelDNN()
         customs = {
             'weighted_binary_crossentropy': cls.weighted_binary_crossentropy,
@@ -225,7 +258,7 @@ class ModelDNN:
 if __name__ == '__main__':
     if 1:
         m = ModelDNN()
-        m.train(dump=False)
+        m.train(dump=True)
     
     if 0:
         # predict
