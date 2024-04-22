@@ -8,10 +8,13 @@ import os
 from pdb import set_trace
 
 class YahooData:
-    def __init__(self, start_date = '2020-01-01') -> None:
+    def __init__(self, start_date='2020-01-01', padding_days=4) -> None:
         self.start_date = start_date
         self.max_retries = 2
         self.delisted = 2
+
+        # duplicate last rows
+        self.tail_padding_days = padding_days
 
     def load_data(self, cache=True):
         end_offset = 0
@@ -48,6 +51,8 @@ class YahooData:
 
         self.yahoo_to_prices(data)
 
+        self.tail_padding()
+
         self.prices.to_pickle(cache_file)
 
     def yahoo_to_prices(self, data):
@@ -56,6 +61,10 @@ class YahooData:
         whtax = 0.
         self.prices = data['Adj Close'] * (1-whtax) + data['Close'] * whtax
         return self.prices
+
+    def tail_padding(self):
+        last_row = self.prices.iloc[-1]  # Get the last row
+        self.prices = pd.concat([self.prices, pd.DataFrame([last_row] * 4)], ignore_index=False)  # Concatenate the last row four times
 
 if __name__ == '__main__':
     f = YahooData(start_date = '2023-01-01')

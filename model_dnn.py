@@ -56,10 +56,10 @@ class ModelDNN:
             self.dropout = 0.1
             self.l1_loss = 1e-2
             self.activation = 'tanh'
-            self.learning_rate = 1e-4
+            self.learning_rate = 1e-5
             # the higher, less over-fitting but slower learning
             self.augmentation_noise_multiple = 1.
-            self.X_noise = 0.001
+            self.X_noise = 0.000
             self.augmentation_records = 1e4
 
     # Define custom loss function weighted by abs(price return)
@@ -135,14 +135,18 @@ class ModelDNN:
         # Define the model architecture
         self.model = Sequential([
             GaussianNoise(self.X_noise),
-            Dense(512, activation=self.activation, input_shape=(1200,)),
+            Dense(512, activation=self.activation),
             Dropout(self.dropout),  # Dropout layer to prevent overfitting
             BatchNormalization(),  # Batch normalization layer
-            Dense(512, activation=self.activation, input_shape=(1200,)),
+
+            Dense(512, activation=self.activation),
             Dropout(self.dropout),  # Dropout layer to prevent overfitting
+            BatchNormalization(),
+            
             Dense(256, activation=self.activation, kernel_regularizer=regularizers.l1(self.l1_loss)),
             Dropout(self.dropout),
-            #BatchNormalization(),
+            BatchNormalization(),
+            
             Dense(128, activation=self.activation, kernel_regularizer=regularizers.l1(self.l1_loss)),
             Dropout(self.dropout),
             BatchNormalization(),
@@ -189,18 +193,24 @@ class ModelDNN:
         self.X_train = np.vstack([self.X_train for _ in range(times)])
         self.y_train = np.concatenate([(self.y_train + random_array[:, i]) for i in range(times)])
         
-    def train_model(self):
+    def train_model(self, warm_model=True, epochs=10):
         # valid rows
         valids = (self.X.notnull().sum(axis=1) / self.X.shape[1]) > 0.8
         X = self.X[valids].fillna(0)
 
         # Split the data into training and testing sets
-        self.X_train, self.X_test, self.y_train,self.y_test = train_test_split(X.drop(['y'], axis=1).values, X['y'].values, test_size=0.02, shuffle=False)
+        self.X_train, self.X_test, self.y_train,self.y_test = train_test_split(X.drop(['y'], axis=1).values, X['y'].values, test_size=0.2, shuffle=True)
+        # check training data
+        if 1:
+            print(f"Training y: {self.y_train}")
+            print(f"Test y: {self.y_test}")
+            print()
+
         self.data_augmentation()
 
-        self.specify_model(warm=True)
+        self.specify_model(warm=warm_model)
         
-        self.train_epochs(3)
+        self.train_epochs(epochs)
         #self.tune_train_epochs(10)
 
         self.test_model()
@@ -232,7 +242,7 @@ class ModelDNN:
         self.model.save(os.path.join(SUBMODEL_PATH, f"dnn_{datetime.today().strftime('%Y%m%d')}.keras"))
 
     @classmethod
-    def load_model(cls, filename=os.path.join(SUBMODEL_PATH, "dnn_20240417.keras")):
+    def load_model(cls, filename=os.path.join(SUBMODEL_PATH, "dnn_20240422.keras")):
         this = ModelDNN()
         customs = {
             'weighted_binary_crossentropy': cls.weighted_binary_crossentropy,
@@ -241,11 +251,11 @@ class ModelDNN:
         this.model = tf.keras.models.load_model(filename, custom_objects=customs)
         return this
     
-    def train(self, dump=True):
+    def train(self, dump=True, cache_data=True, warm_model=True, epochs=10):
         self.data_service = YahooData()
-        self.data_service.load_data(cache=True)
+        self.data_service.load_data(cache=cache_data)
         self.prepare_data(self.data_service.prices)
-        self.train_model()
+        self.train_model(warm_model=warm_model, epochs=epochs)
         if dump:
             self.dump_model()
 
@@ -258,7 +268,7 @@ class ModelDNN:
 if __name__ == '__main__':
     if 1:
         m = ModelDNN()
-        m.train(dump=True)
+        m.train(dump=False, cache_data=False, warm_model=True, epochs=1)
     
     if 0:
         # predict
