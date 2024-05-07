@@ -19,11 +19,11 @@ class Forecast:
     
     def enter_price(self):
         eps = []
-        for lst,margin in [(['PULS','SRLN','JAAA',],.001), (['JEPI','DXJ','XMHQ','IWY','DFAU','GLDM',],.01), ]:
+        for lst,margin in [(['SRLN',],.001), (['JEPI','DXJ','XMHQ','IWY','DFAU','GLDM','QYLD','JEPQ'],.01), ]:
             eps.append(self.model.data_service.prices[lst].iloc[-1] * (1-margin))
         endf = pd.DataFrame(pd.concat(eps))
         
-        send_mail(df=endf.loc[['JEPI','SRLN','JAAA','GLDM','DFAU','DXJ','IWY','XMHQ','PULS']])
+        send_mail(df=endf.loc[['JEPI','SRLN','QYLD','GLDM','DFAU','DXJ','IWY','XMHQ','JEPQ']])
 
     def run(self):
         self.model = ModelDNN.load_model()

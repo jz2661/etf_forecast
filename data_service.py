@@ -58,7 +58,7 @@ class YahooData:
     def yahoo_to_prices(self, data):
         # get adj close, after div tax
         #set(data.columns.get_level_values(0)) # {'Adj Close', 'Close', 'High', 'Low', 'Open', 'Volume'}
-        whtax = 0.
+        whtax = 0.15
         self.prices = data['Adj Close'] * (1-whtax) + data['Close'] * whtax
         return self.prices
 
