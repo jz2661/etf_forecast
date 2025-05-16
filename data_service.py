@@ -32,7 +32,7 @@ class YahooData:
         etfs = pd.read_excel(sheet)
 
         pulled = []
-        data = yf.download(list(etfs['Ticker']),self.start_date,self.end_date)
+        data = yf.download(list(etfs['Ticker']),self.start_date,self.end_date,auto_adjust=False)
         #set_trace()
 
         retry_cnt = 0
@@ -59,6 +59,8 @@ class YahooData:
         # get adj close, after div tax
         #set(data.columns.get_level_values(0)) # {'Adj Close', 'Close', 'High', 'Low', 'Open', 'Volume'}
         whtax = 0.15
+        
+        # set_trace()
         self.prices = data['Adj Close'] * (1-whtax) + data['Close'] * whtax
         return self.prices
 

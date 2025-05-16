@@ -252,7 +252,7 @@ class ModelDNN:
         return this
     
     def train(self, dump=True, cache_data=True, warm_model=True, epochs=10):
-        self.data_service = YahooData()
+        self.data_service = YahooData(start_date = '2023-01-01')
         self.data_service.load_data(cache=cache_data)
         self.prepare_data(self.data_service.prices)
         self.train_model(warm_model=warm_model, epochs=epochs)
@@ -267,9 +267,11 @@ class ModelDNN:
 
 if __name__ == '__main__':
     if 1:
+        # train a new model
         m = ModelDNN()
-        m.train(dump=False, cache_data=False, warm_model=True, epochs=1)
-    
+        # m.train(dump=True, cache_data=False, warm_model=True, epochs=10)
+        m.train(dump=True, cache_data=True, warm_model=True, epochs=20)
+
     if 0:
         # predict
         m = ModelDNN.load_model()
