@@ -76,6 +76,7 @@ class PCA_Features:
 def features_daily():
     m = PCA_Features()
     df = m.predict()
+    df.columns = [f'pca_{i}' for i in range(df.shape[1])]
     df.to_parquet(PCA_FEATURES_LATEST)
 
 if __name__ == '__main__':

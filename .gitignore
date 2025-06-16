@@ -2,6 +2,7 @@
 forzip*
 pca_features_latest*
 usetf2*
+.ipynb*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
