@@ -16,6 +16,9 @@ from email.message import EmailMessage
 
 #__all__ = ['expand_data','black','rank','remove_seen','send_mail','today_str','tz_now','tz_min']
 
+SUBMODEL_PATH = 'models'
+PCA_FEATURES_LATEST = 'pca_features_latest.parquet'
+
 async def run_periodically(interval, periodic_function):
     while True:
         periodic_function()

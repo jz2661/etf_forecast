@@ -66,7 +66,7 @@ class YahooData:
 
     def tail_padding(self):
         last_row = self.prices.iloc[-1]  # Get the last row
-        self.prices = pd.concat([self.prices, pd.DataFrame([last_row] * 4)], ignore_index=False)  # Concatenate the last row four times
+        self.prices = pd.concat([self.prices, pd.DataFrame([last_row] * self.tail_padding_days)], ignore_index=False)  # Concatenate the last row four times
 
 if __name__ == '__main__':
     f = YahooData(start_date = '2023-01-01')

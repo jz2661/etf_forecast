@@ -1,5 +1,7 @@
 *.pkl
 forzip*
+pca_features_latest*
+usetf2*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
