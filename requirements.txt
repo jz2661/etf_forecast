@@ -1,9 +1,10 @@
-keras_tuner==1.4.7
-kt_legacy==1.0.5
+keras-tuner==1.4.7
+kt-legacy==1.0.5
 matplotlib==3.7.1
 numpy==1.24.2
 pandas==1.5.3
 pytz==2022.7.1
-scikit_learn==1.4.0
+scikit-learn==1.4.0
 tensorflow==2.16.1
+tzdata
 yfinance==0.2.12
