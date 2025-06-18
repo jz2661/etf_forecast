@@ -80,7 +80,7 @@ def features_daily():
 
 if __name__ == '__main__':
     if 0:
-        # train a new model
+        # train a new model, set both if 0/1 to if 1 and run
         m = PCA_Features()
         m.train(dump=True, cache_data=False)
 
