@@ -6,6 +6,7 @@ from datetime import date,timedelta
 import pickle as pkl
 import os
 from pdb import set_trace
+from util_ib import ETF_TARGETS
 
 class YahooData:
     def __init__(self, start_date='2020-01-01', padding_days=4) -> None:
@@ -15,6 +16,33 @@ class YahooData:
 
         # duplicate last rows
         self.tail_padding_days = padding_days
+
+    def labels_batch(self, targets):
+        end_offset = 0
+        self.end_date = (date.today()-timedelta(end_offset)).isoformat()
+
+        cache_file = f'label_batch_{self.end_date}.parquet'
+
+        data = yf.download(targets,self.start_date,self.end_date,auto_adjust=False)
+        # set_trace()
+
+        retry_cnt = 0
+        while (missing_col := sum(data.isnull().all())) > 0 and retry_cnt < self.max_retries:
+            if 0:
+                end_offset += 1
+                self.end_date = (date.today()-timedelta(end_offset)).isoformat()
+            pulled = yf.download(targets,self.start_date,self.end_date,auto_adjust=False)
+            null_col = data.isnull().all()
+            nc = null_col[null_col>0].index.values
+            data[nc] = pulled[nc]
+
+            retry_cnt += 1
+            print(f"Failed to fetch prices for {missing_col} tickers.")
+            #raise AttributeError(f"Failed to fetch prices for {missing_col} tickers.")
+
+        self.yahoo_to_prices(data)
+
+        self.prices.to_parquet(cache_file)
 
     def load_data(self, cache=True):
         end_offset = 0
@@ -69,5 +97,11 @@ class YahooData:
         self.prices = pd.concat([self.prices, pd.DataFrame([last_row] * self.tail_padding_days)], ignore_index=False)  # Concatenate the last row four times
 
 if __name__ == '__main__':
-    f = YahooData(start_date = '2023-01-01')
-    f.load_data(cache=False)
+    if 0:
+        f = YahooData(start_date = '2023-01-01')
+        f.load_data(cache=False)
+
+    if 1:
+        f = YahooData(start_date = '2024-01-01')
+        f.labels_batch(ETF_TARGETS)
+

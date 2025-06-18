@@ -18,6 +18,9 @@ from email.message import EmailMessage
 
 SUBMODEL_PATH = 'models'
 PCA_FEATURES_LATEST = 'pca_features_latest.parquet'
+ETF_TARGETS = ['USO','SVXY','GLDM','IWY','XMHQ','QQQ','FXI','SPLG','JEPI','HYG','VTIP','BOXX',
+               'SVOL','SQQQ','EFAV','UVXY',]
+ETF_TARGETS_DNN_MODELS = {t: f"dnn_{t}_20250618.keras" for t in ETF_TARGETS}
 
 async def run_periodically(interval, periodic_function):
     while True:
@@ -100,10 +103,10 @@ def remove_seen(df):
         raise Exception("Remove seen failed.")
         return df
 
-def send_mail(files=[], df=None,):
+def send_mail(files=[], df=None, subject='ib_forecast'):
     # Create the container email message.
     msg = EmailMessage()
-    msg['Subject'] = 'ib_forecast'
+    msg['Subject'] = subject
     # me == the sender's email address
     # family = the list of all recipients' email addresses
     msg['From'] = 'zjzzjz2010@gmail.com'

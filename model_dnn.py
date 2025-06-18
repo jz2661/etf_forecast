@@ -159,6 +159,8 @@ class ModelDNN:
 
     def train_epochs(self, epochs=10):
         # Train the model
+        # print(f"epochs train_epochs: {epochs}")
+
         history = self.model.fit(self.X_train, self.y_train, epochs=epochs, validation_data=(self.X_test, self.y_test), verbose=1)
         self.plot_history(history)
         
@@ -219,7 +221,7 @@ class ModelDNN:
         # predict on self prepared data
         X = self.X.fillna(0)
 
-        probs = [x[0] for x in self.model.predict(X.drop(['y'], axis=1).values)]
+        probs = [x[0] for x in self.model.predict(X.drop(['y'], axis=1, errors='ignore').values)]
         outdf = self.X[['y']]
         outdf['y_prob'] = probs
         return outdf
