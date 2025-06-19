@@ -19,7 +19,7 @@ from email.message import EmailMessage
 SUBMODEL_PATH = 'models'
 PCA_FEATURES_LATEST = 'pca_features_latest.parquet'
 ETF_TARGETS = ['USO','SVXY','GLDM','IWY','XMHQ','QQQ','FXI','SPLG','JEPI','HYG','VTIP','BOXX',
-               'SVOL','SQQQ','EFAV','UVXY',]
+               'SVOL','SQQQ','EFAV','UVXY','VPL',]
 ETF_TARGETS_DNN_MODELS = {t: f"dnn_{t}_20250618.keras" for t in ETF_TARGETS}
 
 async def run_periodically(interval, periodic_function):

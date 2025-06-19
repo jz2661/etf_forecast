@@ -22,7 +22,9 @@ from util_ib import PCA_FEATURES_LATEST, ETF_TARGETS_DNN_MODELS, ETF_TARGETS
 SUBMODEL_PATH = 'models'
 
 def train_multi(label_file):
-    for target in ETF_TARGETS:
+    tgts = ['VPL']
+    # tgts = ETF_TARGETS
+    for target in tgts:
         m = DNNTarget(target=target)
         m.train(label_file=label_file, dump=True, warm_model=False, epochs=100)        
 
@@ -130,7 +132,7 @@ class DNNTarget(ModelDNN):
 
 if __name__ == '__main__':
     # run data_service to refresh
-    label_file='label_batch_2025-06-18.parquet'
+    label_file='label_batch_2025-06-19.parquet'
 
     if 0:
         # train a new model
