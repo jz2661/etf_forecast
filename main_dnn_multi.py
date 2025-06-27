@@ -19,7 +19,7 @@ def run():
     
     maildf['$size'] = maildf.iloc[:, 0].apply(prob_to_dollar)
     # QQQ leverage
-    maildf['$size'] *= maildf.iloc[:, 0]['QQQ']
+    maildf['$size'] *= qqq_to_lever(maildf.iloc[:, 0]['QQQ'])
     maildf['$size'] = maildf['$size'].round().astype(int)
 
     print(maildf)
