@@ -79,6 +79,8 @@ def features_daily():
     df.columns = [f'pca_{i}' for i in range(df.shape[1])]
     df.to_parquet(PCA_FEATURES_LATEST)
 
+    return m, df
+
 if __name__ == '__main__':
     if 0:
         # train a new model, set both if 0/1 to if 1 and run
@@ -87,4 +89,4 @@ if __name__ == '__main__':
 
     if 1:
         # predict
-        features_daily()
+        m, df = features_daily()

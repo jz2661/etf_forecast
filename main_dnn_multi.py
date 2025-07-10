@@ -10,6 +10,10 @@ def prob_to_dollar(p):
 def qqq_to_lever(pqqq):
     return max(1, (pqqq-.5)/0.1)
 
+vol_df = pd.read_csv('etf_vol.csv').drop_duplicates(subset=['Ticker']).set_index('Ticker')['0']
+def vol_scaler(ticker):
+    return vol_df['QQQ'] / vol_df[ticker]
+
 def run():
     df, last_row_sorted = predict_multi()
 
@@ -20,7 +24,11 @@ def run():
     maildf['$size'] = maildf.iloc[:, 0].apply(prob_to_dollar)
     # QQQ leverage
     maildf['$size'] *= qqq_to_lever(maildf.iloc[:, 0]['QQQ'])
-    maildf['$size'] = maildf['$size'].round().astype(int)
+    
+    maildf['$vol_adj_size'] = maildf['$size'] * maildf.index.map(vol_scaler)
+    
+    for c in ['$size','$vol_adj_size']:
+        maildf[c] = maildf[c].round().astype(int)
 
     print(maildf)
     send_mail(df=maildf, subject='DNN Multi Daily')
