@@ -45,7 +45,7 @@ class YahooData:
         self.prices.to_parquet(cache_file)
 
     def load_data(self, cache=True):
-        end_offset = 0
+        end_offset = -1
         self.end_date = (date.today()-timedelta(end_offset)).isoformat()
 
         cache_file = f'etf_prices_{self.end_date}.pkl'
@@ -61,7 +61,7 @@ class YahooData:
 
         pulled = []
         data = yf.download(list(etfs['Ticker']),self.start_date,self.end_date,auto_adjust=False)
-        #set_trace()
+        # set_trace()
 
         retry_cnt = 0
         while (missing_col := sum(data.isnull().all())) > self.delisted and retry_cnt < self.max_retries:
@@ -81,7 +81,7 @@ class YahooData:
 
         self.tail_padding()
 
-        self.prices.to_pickle(cache_file)
+        # self.prices.to_pickle(cache_file)
 
     def yahoo_to_prices(self, data):
         # get adj close, after div tax

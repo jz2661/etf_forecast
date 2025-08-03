@@ -132,15 +132,16 @@ class DNNTarget(ModelDNN):
 
 if __name__ == '__main__':
     # run data_service to refresh
-    label_file='label_batch_2025-06-19.parquet'
-
-    if 0:
-        # train a new model
-        m = DNNTarget(target='QQQ')
-        m.train(label_file=label_file, dump=True, warm_model=False, epochs=100)
-        # m.train(label_file=label_file, dump=True, warm_model=True, epochs=1)
+    label_file='label_batch_2025-08-03.parquet'
 
     if 1:
+        # train a new model
+        for target in ['IBIT','SMH']:
+            m = DNNTarget(target=target)
+            m.train(label_file=label_file, dump=True, warm_model=False, epochs=100)
+            # m.train(label_file=label_file, dump=True, warm_model=True, epochs=1)
+
+    if 0:
         train_multi(label_file)
 
     if 0:

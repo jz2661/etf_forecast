@@ -17,7 +17,8 @@ class PCA_Features:
     
     def prepare_data(self, prices):
         # all data, output contain na
-
+        prices = prices.ffill()
+        
         self.rets = {}
         for lag in self.lags:
             self.rets[lag] = prices.pct_change(lag)
@@ -78,6 +79,7 @@ def features_daily():
     df = m.predict()
     df.columns = [f'pca_{i}' for i in range(df.shape[1])]
     df.to_parquet(PCA_FEATURES_LATEST)
+    return m, df
 
     return m, df
 

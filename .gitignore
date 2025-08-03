@@ -1,4 +1,6 @@
 *.pkl
+*.xml
+*.bat
 forzip*
 pca_features_latest*
 usetf2*
