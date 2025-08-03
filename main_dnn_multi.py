@@ -10,7 +10,9 @@ def prob_to_dollar(p):
 def qqq_to_lever(pqqq):
     return max(1, (pqqq-.5)/0.1)
 
-vol_df = pd.read_csv('etf_vol.csv').drop_duplicates(subset=['Ticker']).set_index('Ticker')['0']
+# from data_service labels 
+# f.prices.pct_change().std()
+vol_df = pd.read_csv('etf_vol.csv').drop_duplicates(subset=['Ticker'], keep='last').set_index('Ticker')['0']
 def vol_scaler(ticker):
     return vol_df['QQQ'] / vol_df[ticker]
 

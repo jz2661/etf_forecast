@@ -140,7 +140,8 @@ if __name__ == '__main__':
             m = DNNTarget(target=target)
             m.train(label_file=label_file, dump=True, warm_model=False, epochs=100)
             # m.train(label_file=label_file, dump=True, warm_model=True, epochs=1)
-
+        # remember change date in model name after dump
+        
     if 0:
         train_multi(label_file)
 
