@@ -6,11 +6,11 @@ from datetime import date,timedelta,datetime
 import os
 import pickle as pkl
 from sklearn.decomposition import SparsePCA
-from util_ib import SUBMODEL_PATH, PCA_FEATURES_LATEST
+from util_ib import SUBMODEL_PATH, PCA_FEATURES_LATEST, INPUT_TICKERS, MODEL_START_DATE
 from data_service import YahooData
 
 class PCA_Features:
-    model_name = 'pca_20250616.pkl'
+    model_name = 'pca_20251104.pkl'
 
     def __init__(self) -> None:
         self.lags = [1,5,21,126]
@@ -18,7 +18,9 @@ class PCA_Features:
     def prepare_data(self, prices):
         # all data, output contain na
         prices = prices.ffill()
-        
+        # tickers in order
+        prices = prices[INPUT_TICKERS]
+
         self.rets = {}
         for lag in self.lags:
             self.rets[lag] = prices.pct_change(lag)
@@ -47,7 +49,7 @@ class PCA_Features:
         return loaded_pca
 
     def get_raw_data(self, cache_data):
-        self.data_service = YahooData(start_date='2024-01-01', padding_days=0)
+        self.data_service = YahooData(start_date=MODEL_START_DATE, padding_days=0)
         self.data_service.load_data(cache=cache_data)
 
         self.prepare_data(self.data_service.prices)        
@@ -79,8 +81,6 @@ def features_daily():
     df = m.predict()
     df.columns = [f'pca_{i}' for i in range(df.shape[1])]
     df.to_parquet(PCA_FEATURES_LATEST)
-    return m, df
-
     return m, df
 
 if __name__ == '__main__':

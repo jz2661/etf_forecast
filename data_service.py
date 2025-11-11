@@ -6,7 +6,7 @@ from datetime import date,timedelta
 import pickle as pkl
 import os
 from pdb import set_trace
-from util_ib import ETF_TARGETS
+from util_ib import ETF_TARGETS, MODEL_START_DATE
 
 class YahooData:
     def __init__(self, start_date='2020-01-01', padding_days=4) -> None:
@@ -18,7 +18,9 @@ class YahooData:
         self.tail_padding_days = padding_days
 
     def labels_batch(self, targets):
-        end_offset = 0
+        
+        # do not use latest 30days data
+        end_offset = 30
         self.end_date = (date.today()-timedelta(end_offset)).isoformat()
 
         cache_file = f'label_batch_{self.end_date}.parquet'
@@ -42,6 +44,7 @@ class YahooData:
 
         self.yahoo_to_prices(data)
 
+        # self.prices = self.prices.bfill()
         self.prices.to_parquet(cache_file)
 
     def load_data(self, cache=True):
@@ -102,6 +105,6 @@ if __name__ == '__main__':
         f.load_data(cache=False)
 
     if 1:
-        f = YahooData(start_date = '2024-01-01')
+        f = YahooData(start_date = MODEL_START_DATE)
         f.labels_batch(ETF_TARGETS)
 

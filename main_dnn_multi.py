@@ -3,9 +3,13 @@ from util_ib import send_mail
 import pandas as pd
 
 def prob_to_dollar(p):
-    pup, dup = .7, 100
-    plow = .58
-    return max(0, (p-plow)/(pup-plow) * dup)
+    # $200k at 70% win rate
+    pup, dup = .7, 200
+    # need at least 57% win rate to start long
+    plow = .565
+    wgt_raw = max(0, (p-plow)/(pup-plow))
+    wgt = min(wgt_raw, wgt_raw**2)
+    return wgt * dup
 
 def qqq_to_lever(pqqq):
     return max(1, (pqqq-.5)/0.1)

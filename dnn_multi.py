@@ -132,13 +132,14 @@ class DNNTarget(ModelDNN):
 
 if __name__ == '__main__':
     # run data_service to refresh
-    label_file='label_batch_2025-08-03.parquet'
+    label_file='label_batch_2025-10-05.parquet'
 
     if 1:
         # train a new model
-        for target in ['IBIT','SMH']:
+        # for target in ['QQQ','SVOL']:
+        for target in ETF_TARGETS:
             m = DNNTarget(target=target)
-            m.train(label_file=label_file, dump=True, warm_model=False, epochs=100)
+            m.train(label_file=label_file, dump=True, warm_model=False, epochs=200)
             # m.train(label_file=label_file, dump=True, warm_model=True, epochs=1)
         # remember change date in model name after dump
         
