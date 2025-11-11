@@ -5,7 +5,6 @@ forzip*
 pca_features_latest*
 usetf2*
 .ipynb*
-models/*
 *.png
 test*
 *.parquet
